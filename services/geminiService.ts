@@ -14,7 +14,8 @@ export const getMisInsights = async (data: TransformerEntry[]) => {
       status: d.status,
       pbgAmount: d.pbgAmount,
       commissioningDue: d.commissioningDueDate,
-      warrantyEnd: d.warrantyDateDispatch,
+      warrantyEndDisp: d.warrantyDateDispatch,
+      warrantyEndComm: d.warrantyDateComm,
       state: d.state,
       salesPerson: d.salesPerson,
       territory: d.territory

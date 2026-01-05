@@ -48,14 +48,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     const counts: Record<string, number> = {};
     data.forEach(d => {
       if (d.warrantyDateDispatch) {
-        // Extract year safely from YYYY-MM-DD string
-        const year = d.warrantyDateDispatch.split('-')[0];
-        counts[year] = (counts[year] || 0) + 1;
+        // Extract YYYY-MM from YYYY-MM-DD
+        const monthKey = d.warrantyDateDispatch.substring(0, 7);
+        counts[monthKey] = (counts[monthKey] || 0) + 1;
       }
     });
     return Object.keys(counts)
       .sort()
-      .map(key => ({ name: key, count: counts[key] }));
+      .map(key => {
+         const [year, month] = key.split('-');
+         const date = new Date(parseInt(year), parseInt(month) - 1);
+         const name = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+         return { name, count: counts[key] };
+      });
   }, [data]);
 
   const stateData = useMemo(() => {
@@ -197,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h4 className="text-lg font-semibold text-slate-800 mb-4">Warranty Expiry by Year</h4>
+          <h4 className="text-lg font-semibold text-slate-800 mb-4">Warranty Expiry (Monthly)</h4>
           <div className="h-64">
              <ResponsiveContainer width="100%" height="100%">
               <BarChart data={warrantyData}>

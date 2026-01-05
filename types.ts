@@ -12,6 +12,7 @@ export interface TransformerEntry {
   warrantyMonthsComm: number;
   warrantyMonthsDispatch: number;
   warrantyDateDispatch: string; // Calculated
+  warrantyDateComm: string; // Calculated (New)
   pbgDueDate: string;
   pbgAmount: number;
   commissioningDoneDate: string | null;

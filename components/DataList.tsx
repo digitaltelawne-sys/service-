@@ -59,13 +59,21 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
         return true;
     })();
 
-    // Warranty Expiry Filter
+    // Warranty Expiry Filter (Checks both dispatch and comm expiry for range)
     const matchesWarranty = (() => {
         if (!warrantyStart && !warrantyEnd) return true;
-        if (!item.warrantyDateDispatch) return false;
-        if (warrantyStart && item.warrantyDateDispatch < warrantyStart) return false;
-        if (warrantyEnd && item.warrantyDateDispatch > warrantyEnd) return false;
-        return true;
+        const wComm = item.warrantyDateComm;
+        const wDisp = item.warrantyDateDispatch;
+        
+        // Simple OR logic: if either expiry date falls in range, show it
+        const check = (dateStr: string) => {
+             if (!dateStr) return false;
+             if (warrantyStart && dateStr < warrantyStart) return false;
+             if (warrantyEnd && dateStr > warrantyEnd) return false;
+             return true;
+        }
+        
+        return check(wComm) || check(wDisp);
     })();
 
     return matchesSearch && matchesStatus && matchesState && matchesComm && matchesPbg && matchesWarranty;
@@ -233,13 +241,15 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
-                        <span className="text-slate-700 font-medium">
-                            {item.warrantyDateDispatch?.split('-')[0] || '-'}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                            {item.warrantyDateDispatch || ''}
-                        </span>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex justify-between gap-2 text-xs">
+                          <span className="text-slate-400">Disp:</span>
+                          <span className="text-slate-700 font-medium">{item.warrantyDateDispatch || '-'}</span>
+                        </div>
+                        <div className="flex justify-between gap-2 text-xs border-t border-slate-100 pt-1">
+                          <span className="text-slate-400">Comm:</span>
+                          <span className="text-slate-700 font-medium">{item.warrantyDateComm || '-'}</span>
+                        </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">

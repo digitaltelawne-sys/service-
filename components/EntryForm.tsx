@@ -28,7 +28,9 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
     salesPerson: '',
     territory: '',
     state: '',
-    narration: ''
+    narration: '',
+    warrantyDateComm: '',
+    warrantyDateDispatch: ''
   });
 
   // Calculate Warranty Date from Dispatch automatically
@@ -36,10 +38,33 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
     if (formData.dispatchDate && formData.warrantyMonthsDispatch) {
       const date = new Date(formData.dispatchDate);
       date.setMonth(date.getMonth() + Number(formData.warrantyMonthsDispatch));
-      const calculatedDate = date.toISOString().split('T')[0];
-      setFormData(prev => ({ ...prev, warrantyDateDispatch: calculatedDate }));
+      try {
+        const calculatedDate = date.toISOString().split('T')[0];
+        setFormData(prev => ({ ...prev, warrantyDateDispatch: calculatedDate }));
+      } catch (e) {
+        // invalid date
+      }
     }
   }, [formData.dispatchDate, formData.warrantyMonthsDispatch]);
+
+  // Calculate Warranty Date from Commissioning automatically
+  useEffect(() => {
+    // Prefer commissioningDoneDate if available, else commissioningDueDate
+    const baseDateStr = formData.commissioningDoneDate || formData.commissioningDueDate;
+    
+    if (baseDateStr && formData.warrantyMonthsComm) {
+      const date = new Date(baseDateStr);
+      date.setMonth(date.getMonth() + Number(formData.warrantyMonthsComm));
+      try {
+        const calculatedDate = date.toISOString().split('T')[0];
+        setFormData(prev => ({ ...prev, warrantyDateComm: calculatedDate }));
+      } catch (e) {
+        // invalid date
+      }
+    } else {
+        setFormData(prev => ({ ...prev, warrantyDateComm: '' }));
+    }
+  }, [formData.commissioningDueDate, formData.commissioningDoneDate, formData.warrantyMonthsComm]);
 
   const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -70,6 +95,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
       warrantyMonthsComm: Number(formData.warrantyMonthsComm),
       warrantyMonthsDispatch: Number(formData.warrantyMonthsDispatch),
       warrantyDateDispatch: formData.warrantyDateDispatch!,
+      warrantyDateComm: formData.warrantyDateComm!,
       pbgDueDate: formData.pbgDueDate || '',
       pbgAmount: Number(formData.pbgAmount),
       commissioningDoneDate: formData.commissioningDoneDate || null,
@@ -195,9 +221,15 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
               <input name="warrantyMonthsDispatch" type="number" value={formData.warrantyMonthsDispatch} onChange={handleChange} className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
-          <div>
-             <label className="block text-sm font-medium text-slate-700 mb-1">Warranty Exp. (from Dispatch)</label>
-             <input disabled name="warrantyDateDispatch" type="date" value={formData.warrantyDateDispatch} className="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500 border p-2 cursor-not-allowed" />
+          <div className="grid grid-cols-2 gap-4">
+             <div>
+               <label className="block text-xs font-medium text-slate-700 mb-1">Warranty Exp. (from Dispatch)</label>
+               <input disabled name="warrantyDateDispatch" type="date" value={formData.warrantyDateDispatch} className="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500 border p-2 cursor-not-allowed" />
+             </div>
+             <div>
+               <label className="block text-xs font-medium text-slate-700 mb-1">Warranty Exp. (from Comm)</label>
+               <input disabled name="warrantyDateComm" type="date" value={formData.warrantyDateComm} className="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500 border p-2 cursor-not-allowed" />
+             </div>
           </div>
            <div className="grid grid-cols-2 gap-4">
              <div>

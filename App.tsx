@@ -36,7 +36,15 @@ export default function App() {
           state: item.state || '',
           narration: item.narration || '',
           // Ensure warrantyDateDispatch exists, fallback to dispatchDate if calculation missing
-          warrantyDateDispatch: item.warrantyDateDispatch || item.dispatchDate
+          warrantyDateDispatch: item.warrantyDateDispatch || item.dispatchDate,
+          // Ensure warrantyDateComm exists
+          warrantyDateComm: item.warrantyDateComm || (() => {
+             const base = item.commissioningDoneDate || item.commissioningDueDate;
+             if (!base) return '';
+             const d = new Date(base);
+             d.setMonth(d.getMonth() + (Number(item.warrantyMonthsComm) || 12));
+             return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+          })()
         }));
         setData(migrated);
       } catch (e) {
@@ -59,6 +67,7 @@ export default function App() {
                 warrantyMonthsComm: 12,
                 warrantyMonthsDispatch: 18,
                 warrantyDateDispatch: '2025-07-15',
+                warrantyDateComm: '2025-02-15',
                 pbgAmount: 15000,
                 pbgDueDate: '2024-03-01',
                 commissioningDoneDate: '2024-02-10',
@@ -82,6 +91,7 @@ export default function App() {
                 warrantyMonthsComm: 24,
                 warrantyMonthsDispatch: 30,
                 warrantyDateDispatch: '2026-08-01',
+                warrantyDateComm: '2026-03-01',
                 pbgAmount: 25000,
                 pbgDueDate: '2024-04-15',
                 commissioningDoneDate: null,
