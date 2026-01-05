@@ -14,7 +14,10 @@ export const getMisInsights = async (data: TransformerEntry[]) => {
       status: d.status,
       pbgAmount: d.pbgAmount,
       commissioningDue: d.commissioningDueDate,
-      warrantyEnd: d.warrantyDateDispatch
+      warrantyEnd: d.warrantyDateDispatch,
+      state: d.state,
+      salesPerson: d.salesPerson,
+      territory: d.territory
     }));
 
     const jsonString = JSON.stringify(simplifiedData);
@@ -50,7 +53,11 @@ export const getMisInsights = async (data: TransformerEntry[]) => {
 
 export const askAiAssistant = async (question: string, data: TransformerEntry[]) => {
   try {
-    const simplifiedData = JSON.stringify(data);
+    const simplifiedData = JSON.stringify(data.map(d => ({
+      ...d,
+      // Optional: Remove purely UI/internal IDs if strict token optimization is needed, but keeping them is fine for context.
+    })));
+    
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `

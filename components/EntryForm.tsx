@@ -24,7 +24,11 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
     pbgAmount: 0,
     pbgDueDate: '',
     commissioningDoneDate: '',
-    status: 'Dispatched'
+    status: 'Dispatched',
+    salesPerson: '',
+    territory: '',
+    state: '',
+    narration: ''
   });
 
   // Calculate Warranty Date from Dispatch automatically
@@ -37,6 +41,13 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
     }
   }, [formData.dispatchDate, formData.warrantyMonthsDispatch]);
 
+  const generateId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Basic validation
@@ -46,7 +57,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
     }
 
     const newEntry: TransformerEntry = {
-      id: initialData?.id || crypto.randomUUID(),
+      id: initialData?.id || generateId(),
       serialNumber: formData.serialNumber!,
       customerName: formData.customerName!,
       project: formData.project || 'N/A',
@@ -54,7 +65,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
       ratingKVA: Number(formData.ratingKVA),
       voltageRatio: formData.voltageRatio || 'N/A',
       commissioningDueDate: formData.commissioningDueDate!,
-      sourceWarehouse: formData.sourceWarehouse || 'Main',
+      sourceWarehouse: formData.sourceWarehouse || 'Rabale',
       shippingAddress: formData.shippingAddress || '',
       warrantyMonthsComm: Number(formData.warrantyMonthsComm),
       warrantyMonthsDispatch: Number(formData.warrantyMonthsDispatch),
@@ -62,7 +73,11 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
       pbgDueDate: formData.pbgDueDate || '',
       pbgAmount: Number(formData.pbgAmount),
       commissioningDoneDate: formData.commissioningDoneDate || null,
-      status: formData.commissioningDoneDate ? 'Commissioned' : 'Dispatched'
+      status: formData.commissioningDoneDate ? 'Commissioned' : 'Dispatched',
+      salesPerson: formData.salesPerson || 'N/A',
+      territory: formData.territory || '',
+      state: formData.state || '',
+      narration: formData.narration || ''
     };
 
     onSave(newEntry);
@@ -103,6 +118,25 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
           </div>
         </div>
 
+        {/* Sales & Location (New) */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Sales & Region</h3>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Sales Person</label>
+            <input name="salesPerson" type="text" value={formData.salesPerson} onChange={handleChange} placeholder="Sales Rep Name" className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
+              <input name="state" type="text" value={formData.state} onChange={handleChange} placeholder="e.g. Maharashtra" className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Territory</label>
+              <input name="territory" type="text" value={formData.territory} onChange={handleChange} placeholder="e.g. West" className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+          </div>
+        </div>
+
         {/* Specs */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Technical Specs</h3>
@@ -120,9 +154,9 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
              <label className="block text-sm font-medium text-slate-700 mb-1">Source Warehouse</label>
              <select name="sourceWarehouse" value={formData.sourceWarehouse} onChange={handleChange} className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none">
                <option value="">Select Warehouse</option>
-               <option value="Main Factory">Main Factory</option>
-               <option value="Regional Hub A">Regional Hub A</option>
-               <option value="Regional Hub B">Regional Hub B</option>
+               <option value="Rabale">Rabale</option>
+               <option value="Taloja">Taloja</option>
+               <option value="Ambernath-M2">Ambernath-M2</option>
              </select>
            </div>
         </div>
@@ -175,6 +209,12 @@ export const EntryForm: React.FC<EntryFormProps> = ({ initialData, onSave, onCan
               <input name="pbgDueDate" type="date" value={formData.pbgDueDate} onChange={handleChange} className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
+        </div>
+
+        {/* Narration (New) */}
+        <div className="md:col-span-2">
+           <label className="block text-sm font-medium text-slate-700 mb-1">Narration / Remarks</label>
+           <textarea name="narration" rows={3} value={formData.narration} onChange={handleChange} placeholder="Any additional notes..." className="w-full rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
         </div>
 
         <div className="md:col-span-2 pt-6 flex justify-end gap-3 border-t border-slate-100 mt-4">

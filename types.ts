@@ -16,6 +16,11 @@ export interface TransformerEntry {
   pbgAmount: number;
   commissioningDoneDate: string | null;
   status: 'Dispatched' | 'Commissioned' | 'Overdue';
+  // New Fields
+  salesPerson: string;
+  territory: string;
+  state: string;
+  narration: string;
 }
 
 export enum ViewState {

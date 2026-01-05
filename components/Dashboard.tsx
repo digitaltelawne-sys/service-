@@ -2,15 +2,13 @@ import React, { useMemo } from 'react';
 import { TransformerEntry } from '../types';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line 
+  PieChart, Pie, Cell 
 } from 'recharts';
 import { TrendingUp, AlertTriangle, CheckCircle, IndianRupee } from 'lucide-react';
 
 interface DashboardProps {
   data: TransformerEntry[];
 }
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
   
@@ -58,6 +56,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     return Object.keys(counts)
       .sort()
       .map(key => ({ name: key, count: counts[key] }));
+  }, [data]);
+
+  const stateData = useMemo(() => {
+      const counts: Record<string, number> = {};
+      data.forEach(d => {
+          const st = d.state || 'Unknown';
+          counts[st] = (counts[st] || 0) + 1;
+      });
+      return Object.keys(counts)
+          .map(key => ({ name: key, count: counts[key] }))
+          .sort((a, b) => b.count - a.count);
+  }, [data]);
+
+  const pbgDueData = useMemo(() => {
+      const counts: Record<string, number> = {};
+      data.forEach(d => {
+          if (d.pbgDueDate) {
+              // Group by YYYY-MM
+              const month = d.pbgDueDate.substring(0, 7);
+              counts[month] = (counts[month] || 0) + (d.pbgAmount || 0);
+          }
+      });
+      return Object.keys(counts)
+          .sort()
+          .slice(0, 10) // Limit to 10 periods
+          .map(key => ({ name: key, value: counts[key] }));
   }, [data]);
 
   const statusData = [
@@ -114,15 +138,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h4 className="text-lg font-semibold text-slate-800 mb-4">Units by Rating (KVA)</h4>
+          <h4 className="text-lg font-semibold text-slate-800 mb-4">Regional Distribution (State)</h4>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ratingData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} />
+              <BarChart data={stateData} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" fontSize={12} />
+                <YAxis dataKey="name" type="category" width={100} fontSize={12} />
                 <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -158,15 +182,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
        {/* Charts Row 2 */}
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h4 className="text-lg font-semibold text-slate-800 mb-4">Top Customers by Volume</h4>
+          <h4 className="text-lg font-semibold text-slate-800 mb-4">PBG Due Schedule (Amount)</h4>
           <div className="h-64">
              <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={customerData} layout="vertical" margin={{ left: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" fontSize={12} />
-                <YAxis dataKey="name" type="category" width={100} fontSize={12} />
+              <BarChart data={pbgDueData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+                <Bar dataKey="value" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>

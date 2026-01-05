@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TransformerEntry } from '../types';
-import { Search, Filter, Trash2, Edit, Calendar, X } from 'lucide-react';
+import { Search, Calendar, Edit, Trash2 } from 'lucide-react';
 
 interface DataListProps {
   data: TransformerEntry[];
@@ -11,6 +11,7 @@ interface DataListProps {
 export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [filterState, setFilterState] = useState('All');
   
   // Date Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -18,6 +19,14 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
   const [commEnd, setCommEnd] = useState('');
   const [pbgStart, setPbgStart] = useState('');
   const [pbgEnd, setPbgEnd] = useState('');
+  const [warrantyStart, setWarrantyStart] = useState('');
+  const [warrantyEnd, setWarrantyEnd] = useState('');
+
+  // Extract unique states for filter dropdown
+  const uniqueStates = useMemo(() => {
+      const states = new Set(data.map(d => d.state).filter(Boolean));
+      return Array.from(states).sort();
+  }, [data]);
 
   const filteredData = data.filter(item => {
     // Text Search
@@ -28,6 +37,9 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
     
     // Status Filter
     const matchesStatus = filterStatus === 'All' || item.status === filterStatus;
+
+    // State Filter
+    const matchesState = filterState === 'All' || item.state === filterState;
 
     // Commissioning Due Date Filter
     const matchesComm = (() => {
@@ -47,25 +59,37 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
         return true;
     })();
 
-    return matchesSearch && matchesStatus && matchesComm && matchesPbg;
+    // Warranty Expiry Filter
+    const matchesWarranty = (() => {
+        if (!warrantyStart && !warrantyEnd) return true;
+        if (!item.warrantyDateDispatch) return false;
+        if (warrantyStart && item.warrantyDateDispatch < warrantyStart) return false;
+        if (warrantyEnd && item.warrantyDateDispatch > warrantyEnd) return false;
+        return true;
+    })();
+
+    return matchesSearch && matchesStatus && matchesState && matchesComm && matchesPbg && matchesWarranty;
   });
 
   const clearFilters = () => {
     setSearchTerm('');
     setFilterStatus('All');
+    setFilterState('All');
     setCommStart('');
     setCommEnd('');
     setPbgStart('');
     setPbgEnd('');
+    setWarrantyStart('');
+    setWarrantyEnd('');
   };
 
-  const hasActiveFilters = filterStatus !== 'All' || commStart || commEnd || pbgStart || pbgEnd;
+  const hasActiveFilters = filterStatus !== 'All' || filterState !== 'All' || commStart || commEnd || pbgStart || pbgEnd || warrantyStart || warrantyEnd;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Primary Toolbar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-50">
-        <div className="relative w-full md:w-96">
+      <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row gap-4 justify-between items-center bg-slate-50">
+        <div className="relative w-full xl:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
@@ -76,7 +100,7 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
           />
         </div>
         
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
           {hasActiveFilters && (
              <button 
                onClick={clearFilters}
@@ -87,7 +111,18 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
           )}
           
           <select 
-            className="p-2 rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-40 text-sm"
+            className="p-2 rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm w-32"
+            value={filterState}
+            onChange={(e) => setFilterState(e.target.value)}
+          >
+            <option value="All">All States</option>
+            {uniqueStates.map(st => (
+                <option key={st} value={st}>{st}</option>
+            ))}
+          </select>
+
+          <select 
+            className="p-2 rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm w-32"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
@@ -111,60 +146,40 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
       {/* Advanced Filters Panel */}
       {showFilters && (
         <div className="bg-slate-50 border-b border-slate-200 p-4 animate-fade-in">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Commissioning Date Range */}
               <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase">Commissioning Due Date</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Commissioning Due</label>
                  </div>
                  <div className="flex gap-2 items-center">
-                    <div className="relative w-full">
-                       <input 
-                         type="date" 
-                         value={commStart} 
-                         onChange={e => setCommStart(e.target.value)} 
-                         className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" 
-                       />
-                       <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400">From</span>
-                    </div>
+                    <input type="date" value={commStart} onChange={e => setCommStart(e.target.value)} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" />
                     <span className="text-slate-400">-</span>
-                    <div className="relative w-full">
-                       <input 
-                         type="date" 
-                         value={commEnd} 
-                         onChange={e => setCommEnd(e.target.value)} 
-                         className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" 
-                       />
-                       <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400">To</span>
-                    </div>
+                    <input type="date" value={commEnd} onChange={e => setCommEnd(e.target.value)} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" />
                  </div>
               </div>
 
               {/* PBG Date Range */}
               <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase">PBG Due Date</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase">PBG Due</label>
                  </div>
                  <div className="flex gap-2 items-center">
-                    <div className="relative w-full">
-                       <input 
-                         type="date" 
-                         value={pbgStart} 
-                         onChange={e => setPbgStart(e.target.value)} 
-                         className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" 
-                       />
-                       <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400">From</span>
-                    </div>
+                    <input type="date" value={pbgStart} onChange={e => setPbgStart(e.target.value)} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" />
                     <span className="text-slate-400">-</span>
-                    <div className="relative w-full">
-                       <input 
-                         type="date" 
-                         value={pbgEnd} 
-                         onChange={e => setPbgEnd(e.target.value)} 
-                         className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" 
-                       />
-                       <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400">To</span>
-                    </div>
+                    <input type="date" value={pbgEnd} onChange={e => setPbgEnd(e.target.value)} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" />
+                 </div>
+              </div>
+
+              {/* Warranty Expiry Range */}
+              <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                 <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Warranty Expiry</label>
+                 </div>
+                 <div className="flex gap-2 items-center">
+                    <input type="date" value={warrantyStart} onChange={e => setWarrantyStart(e.target.value)} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" />
+                    <span className="text-slate-400">-</span>
+                    <input type="date" value={warrantyEnd} onChange={e => setWarrantyEnd(e.target.value)} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" />
                  </div>
               </div>
            </div>
@@ -178,8 +193,8 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
             <tr>
               <th className="px-6 py-3">Serial No</th>
               <th className="px-6 py-3">Customer</th>
+              <th className="px-6 py-3">Sales / Loc</th>
               <th className="px-6 py-3">Rating</th>
-              <th className="px-6 py-3">Dispatch Date</th>
               <th className="px-6 py-3">Comm. Due</th>
               <th className="px-6 py-3">Warranty Exp.</th>
               <th className="px-6 py-3">Status</th>
@@ -195,14 +210,20 @@ export const DataList: React.FC<DataListProps> = ({ data, onDelete, onEdit }) =>
               </tr>
             ) : (
               filteredData.map(item => (
-                <tr key={item.id} className="hover:bg-slate-50 transition">
+                <tr key={item.id} className="hover:bg-slate-50 transition group">
                   <td className="px-6 py-4 font-medium text-slate-900">{item.serialNumber}</td>
                   <td className="px-6 py-4">
                     <div className="font-medium text-slate-800">{item.customerName}</div>
                     <div className="text-xs text-slate-500">{item.project}</div>
+                    {item.narration && (
+                        <div className="text-[10px] text-slate-400 mt-1 italic max-w-[150px] truncate">{item.narration}</div>
+                    )}
                   </td>
-                  <td className="px-6 py-4">{item.ratingKVA} KVA <span className="text-slate-400">|</span> {item.voltageRatio}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{item.dispatchDate}</td>
+                  <td className="px-6 py-4">
+                     <div className="text-slate-800 font-medium">{item.state || '-'}</div>
+                     <div className="text-xs text-slate-500">{item.salesPerson}</div>
+                  </td>
+                  <td className="px-6 py-4">{item.ratingKVA} KVA <br/><span className="text-xs text-slate-400">{item.voltageRatio}</span></td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className={`${new Date(item.commissioningDueDate) < new Date() && item.status !== 'Commissioned' ? 'text-red-600 font-bold' : ''}`}>
                       {item.commissioningDueDate}

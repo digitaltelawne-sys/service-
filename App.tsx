@@ -27,7 +27,18 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setData(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // Data Migration: Ensure all records have the new fields
+        const migrated = parsed.map((item: any) => ({
+          ...item,
+          salesPerson: item.salesPerson || 'N/A',
+          territory: item.territory || '',
+          state: item.state || '',
+          narration: item.narration || '',
+          // Ensure warrantyDateDispatch exists, fallback to dispatchDate if calculation missing
+          warrantyDateDispatch: item.warrantyDateDispatch || item.dispatchDate
+        }));
+        setData(migrated);
       } catch (e) {
         console.error("Failed to parse saved data", e);
       }
@@ -43,7 +54,7 @@ export default function App() {
                 ratingKVA: 500,
                 voltageRatio: '11/0.433',
                 commissioningDueDate: '2024-02-15',
-                sourceWarehouse: 'Main Factory',
+                sourceWarehouse: 'Rabale',
                 shippingAddress: '123 Power Ln, Houston, TX',
                 warrantyMonthsComm: 12,
                 warrantyMonthsDispatch: 18,
@@ -51,7 +62,11 @@ export default function App() {
                 pbgAmount: 15000,
                 pbgDueDate: '2024-03-01',
                 commissioningDoneDate: '2024-02-10',
-                status: 'Commissioned'
+                status: 'Commissioned',
+                salesPerson: 'John Doe',
+                territory: 'North',
+                state: 'Texas',
+                narration: 'Priority installation requested.'
             },
             {
                 id: '2',
@@ -62,7 +77,7 @@ export default function App() {
                 ratingKVA: 1000,
                 voltageRatio: '33/11',
                 commissioningDueDate: '2024-03-01',
-                sourceWarehouse: 'Regional Hub A',
+                sourceWarehouse: 'Taloja',
                 shippingAddress: '45 Metro Way, Chicago, IL',
                 warrantyMonthsComm: 24,
                 warrantyMonthsDispatch: 30,
@@ -70,7 +85,11 @@ export default function App() {
                 pbgAmount: 25000,
                 pbgDueDate: '2024-04-15',
                 commissioningDoneDate: null,
-                status: 'Overdue'
+                status: 'Overdue',
+                salesPerson: 'Jane Smith',
+                territory: 'Midwest',
+                state: 'Illinois',
+                narration: 'Delay in site readiness.'
             }
         ];
         setData(mock);
